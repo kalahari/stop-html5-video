@@ -1,0 +1,4 @@
+stop-tube.sublime-*
+node_modules
+dist/
+src/stoptube@kashiif.com
