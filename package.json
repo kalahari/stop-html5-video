@@ -27,6 +27,7 @@
   "devDependencies": {
     "grunt-contrib-copy": ">=0.4.0",
     "grunt-string-replace": "~0.2.3",
+    "grunt-file-regex-rename": ">=0.1.0",
     "grunt-contrib-compress": "~0.4.6",
     "grunt-bump": "0.0.2",
     "grunt-contrib-clean": "~0.4.0"
