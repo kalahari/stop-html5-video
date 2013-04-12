@@ -7,6 +7,11 @@ module.exports = function(grunt) {
   grunt.initConfig({
 	pkg: pkg,
 	
+    // Before generating any new files, remove any previously-created files.
+    clean: {
+      test: [distdir]
+    },
+
 	// Copy things to a distdir dir, and only change things in the temp dir
 	copy: {
 		prod: {
@@ -71,19 +76,54 @@ module.exports = function(grunt) {
 			},
 			files: [ { expand: true, cwd: distdir, src: '**/**' }]
 		} 
+	},
+	
+	fileregexrename1: {
+	  rename_version: {
+		src: 'dist/' + pkg.name + '-' + pkg.version + '/__version__',
+		options: {
+		  replacements: [
+		    {
+			  pattern: /__version__/g,
+			  replacement: pkg.version
+		    }
+		  ]
+		},
+
+	  },
+	  
+	},
+
+	fileregexrename: {
+	  rename_version: {
+		options: {
+		  replacements: [
+		    {
+			  pattern: /__version__/g,
+			  replacement: pkg.version
+		    }
+		  ]
+		},
+		files: [ { expand: true, cwd: distdir, src: '__version__', dest: distdir }]
+
+	  },
+	  
 	}
   });
 
+  // These plugins provide necessary tasks.
+  grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-copy');
 
-  grunt.loadNpmTasks('grunt-string-replace');
-  
+  grunt.loadNpmTasks('grunt-string-replace');  
+  grunt.loadNpmTasks('grunt-file-regex-rename');
+
   grunt.loadNpmTasks('grunt-contrib-compress');
 
   // $: grunt bump
   grunt.loadNpmTasks('grunt-bump');
 
   // Default task(s).
-  grunt.registerTask('default', ['copy:prod', 'string-replace', 'compress']);
+  grunt.registerTask('default', ['clean', 'copy:prod', 'string-replace', 'fileregexrename', 'compress']);
   
 };
