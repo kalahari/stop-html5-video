@@ -36,6 +36,12 @@ var WindowListener = {
   }
 };
 
+function install(data, reason) {
+}
+
+function uninstall(data, reason) {
+}
+
 function startup(data, reason) {
 
   let resource = Services.io.getProtocolHandler('resource').QueryInterface(Ci.nsIResProtocolHandler);

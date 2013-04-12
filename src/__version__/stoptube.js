@@ -78,28 +78,22 @@ var stopTube = {
 		else {
 			// Youtube change on 2012-12-07 
 
-			if ('MutationObserver' in page.defaultView) {
-				// MutationObserver.observe failes in FF17
-				// create an observer instance
-				var observer = new page.defaultView.MutationObserver(function(mutations, obs) {
-					stopTube._handleMutation(mutations, obs);
-				});
+			// create an observer instance
+			var observer = new page.defaultView.MutationObserver(function(mutations, obs) {
+				stopTube._handleMutation(mutations, obs);
+			});
+		 
+			// configuration of the observer:
+			var config = { childList: true};
 			 
-				// configuration of the observer:
-				var config = { childList: true};
-				 
-				// pass in the target node, as well as the observer options
-				observer.observe(page.body, config);		 
+			// pass in the target node, as well as the observer options
+			observer.observe(page.body, config);		 
 
-				page.addEventListener('unload', function(evt) {
-					// later, you can stop observing
-					observer.disconnect();
+			page.addEventListener('unload', function(evt) {
+				// later, you can stop observing
+				observer.disconnect();
 
-				});
-			}
-			else {
-				page.addEventListener('DOMNodeInserted', stopTube._handleSubTreeModified);
-			}
+			});
 		}
 	},
 	
@@ -121,26 +115,6 @@ var stopTube = {
 
 			theObserver.disconnect();
 
-			stopTube._processVideoTag(v);
-		}
-	},
-
-	_handleSubTreeModified: function(evt) {
-		var page = evt.target.ownerDocument;
-		var v = stopTube.getVideoTag(page);
-		/* __debug__ */ stopTube.log('videoTag on page DOMNodeInserted: ' + v);
-		if (v) {
-			page.removeEventListener('DOMNodeInserted', stopTube._handleSubTreeModified);
-			
-			/*
-			var info = evt.relatedNode + '';
-			if (evt.relatedNode) {
-				info += ', ' + evt.relatedNode.id;
-				if (evt.relatedNode.parentNode) {
-					info += ', ' + evt.relatedNode.parentNode.id;
-				}
-			}
-			*/
 			stopTube._processVideoTag(v);
 		}
 	},
