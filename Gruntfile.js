@@ -65,7 +65,24 @@ module.exports = function(grunt) {
 			]
 
 		
-	  }
+	  },
+	  
+	  content_files : {
+		options: {
+			replacements: [{
+				pattern: /(\s)+\/\/[^!].+/g,	// remove comments
+				replacement: ''
+			},
+			{
+				pattern: /(\s)+stopTube\.debug\(.+\)\;/g,
+				replacement: ''
+			}]
+		},
+		
+		files: [
+				{expand: true, cwd: distdir, src : ['**/*.js','**/*.jsm'],  dest: distdir },
+			]
+	  }	  
 	},
 	
 	compress: { 
@@ -78,22 +95,6 @@ module.exports = function(grunt) {
 		} 
 	},
 	
-	fileregexrename1: {
-	  rename_version: {
-		src: 'dist/' + pkg.name + '-' + pkg.version + '/__version__',
-		options: {
-		  replacements: [
-		    {
-			  pattern: /__version__/g,
-			  replacement: pkg.version
-		    }
-		  ]
-		},
-
-	  },
-	  
-	},
-
 	fileregexrename: {
 	  rename_version: {
 		options: {

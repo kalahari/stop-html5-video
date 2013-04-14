@@ -12,15 +12,14 @@ var stopTube = {
 		window.addEventListener('stopTube_PlayRequested', stopTube.handlePlayRequested, false, true); 
 
 		var gBrowser = window.document.getElementById('content');
-		gBrowser.addEventListener('DOMContentLoaded', stopTube.DOMContentLoaded, false);
-		
+		gBrowser.addEventListener('DOMContentLoaded', stopTube.handleDOMContentLoaded, false);
 	},
 	
 	unbind : function (window) {
 		window.removeEventListener('stopTube_PlayRequested', stopTube.handlePlayRequested); 
 		
 		var gBrowser = window.document.getElementById('content');
-		gBrowser.removeEventListener('DOMContentLoaded', stopTube.DOMContentLoaded);
+		gBrowser.removeEventListener('DOMContentLoaded', stopTube.handleDOMContentLoaded);
 	
 		// Check each tab of this browser instance
 		var numTabs = gBrowser.browsers.length;
@@ -46,7 +45,7 @@ var stopTube = {
 	},
 
 	getVideoTag: function(doc) {
-		//stopTube.log('querySelector: '  + doc.querySelector('#movie_player-html5 video'));
+		//stopTube.debug('querySelector: '  + doc.querySelector('#movie_player-html5 video'));
 		//return doc.querySelector('#movie_player-html5 video');
 		return doc.querySelector('#' + stopTube._video_parent_tag_id + ' video');
 	},
@@ -61,16 +60,20 @@ var stopTube = {
 		return false;
 	},
 
-	DOMContentLoaded : function (event) {
-		/* __debug__ */ stopTube.log('DOMContentLoaded: ' + event.target.location.href);
-		var page = event.target;
+	
+	handleDOMContentLoaded : function (event) {
+		stopTube.debug('DOMContentLoaded: ' + event.target.location.href);
 		
-		/* __debug__ */ //stopTube.log('stopTube.isYouTubeVideoPage(page): ' + stopTube.isYouTubeVideoPage(page));
+		stopTube._processPage(event.target);
+	},
+	
+	_processPage: function(page) {
+		//stopTube.debug('stopTube.isYouTubeVideoPage(page): ' + stopTube.isYouTubeVideoPage(page));
 		if (!stopTube.isYouTubeVideoPage(page)) return;
 		
 		var v = stopTube.getVideoTag(page);
 		
-		/* __debug__ */ stopTube.log('videoTag on page: ' + v);
+		stopTube.debug('videoTag on page: ' + v);
 		
 		if (v) {
 			stopTube._processVideoTag(v);
@@ -98,9 +101,9 @@ var stopTube = {
 	},
 	
 	_handleMutation: function(mutRecords, theObserver) {
-		var page = mutRecords[0].target.ownerDocument;
-		var v = stopTube.getVideoTag(page);
-		/* __debug__ */ stopTube.log('videoTag on page Mutation: ' + v);
+		var page = mutRecords[0].target.ownerDocument,
+			v = stopTube.getVideoTag(page);
+		stopTube.debug('videoTag on page Mutation: ' + v);
 		if (v) {
 
 			/*
@@ -108,7 +111,7 @@ var stopTube = {
 				var mutRecord = mutRecords[i]; 
 				for (var j = 0; j < mutRecord.addedNodes.length; ++j) {
 					var node = mutRecord.addedNodes[j]; 
-					stopTube.log(node.tagName + ' ' + node.id  );
+					stopTube.debug(node.tagName + ' ' + node.id  );
 				}			
 			}
 			*/			
@@ -122,56 +125,64 @@ var stopTube = {
 	_processVideoTag: function(v) {
 		try {
 
-		if (v.getAttribute('data-user-clicked')) return;
+			if (v.getAttribute('data-user-clicked')) return;
 
-		/* __debug__ */ stopTube.log('found video: ' + v.tagName);
-		v.addEventListener('loadedmetadata', stopTube.videoLoadStarted, false);
-		var a = stopTube.putAnchor(v.ownerDocument, v.ownerDocument.getElementById(stopTube._video_parent_tag_id));
-		a.addEventListener('click', function(evt) { 
-				var newEvt = this.ownerDocument.createEvent('Events');  
-				newEvt.initEvent('stopTube_PlayRequested', true, true);  
-				this.dispatchEvent(newEvt);
-				evt.stopPropagation();
-			}, true );
+			stopTube.debug('found video: ' + v.tagName);
+			v.addEventListener('loadedmetadata', stopTube.videoLoadStarted, false);
+			var a = stopTube.putAnchor(v.ownerDocument, v.ownerDocument.getElementById(stopTube._video_parent_tag_id));
+			a.addEventListener('click', function(evt) { 
+					var newEvt = this.ownerDocument.createEvent('Events');  
+					newEvt.initEvent('stopTube_PlayRequested', true, true);  
+					this.dispatchEvent(newEvt);
+					evt.stopPropagation();
+				}, true );
 		}
 		catch(ex) {
 			stopTube.log(ex);
 		}
 	},
 	
+	stylize: function(a, props) {
+		for (var p in props) {
+			a.style[p] = props[p];
+		}
+	},
+	
 	putAnchor: function(page, divToOverlay) {
 		var a = page.createElement('a');
 
-		var normalBackground = '#eee';
+		var normalBackground = '#eee',
+			pos = stopTube.findPosition(divToOverlay);
 
 		a.setAttribute('id', 'kashiif-stop-tube');
 		a.setAttribute('href', 'javascript:void(0);');
 		a.addEventListener('mouseover', function () { this.style.backgroundColor = '#fff'; }, false);
 		a.addEventListener('mouseout', function () { this.style.backgroundColor = normalBackground; }, false);
-		a.style.display = 'block';
-		a.style.fontSize = '14pt';
-		a.style.textAlign = 'center';
-		a.style.border = '1px dotted gray';
-		a.style.background = 'url(resource://stop-tube/icon.png) no-repeat scroll 54% 42% ' + normalBackground;
-		a.style.zIndex = '20000';
-		a.style.mozBoxSizing = 'border-box';
-		a.style.transition = 'background-color 1s';
-		a.style.border = '2px dotted #b3b3b3';
-		a.style.mozTransition = 'background-color 1s';
-
-		var pos = stopTube.findPosition(divToOverlay);
-		a.style.position = 'absolute';
-		a.style.top = pos.topPos;
-		a.style.left = pos.leftPos;
-		
+	
+		stopTube.stylize(a, {
+		    display: 'block',
+		    fontSize: '14pt',
+		    textAlign: 'center',
+		    border: '1px dotted gray',
+		    background: 'url(resource://stop-tube/icon.png) no-repeat scroll 54% 42% ' + normalBackground,
+		    zIndex: '20000',
+		    mozBoxSizing: 'border-box',
+		    transition: 'background-color 1s',
+		    border: '2px dotted #b3b3b3',
+		    mozTransition: 'background-color 1s',
+		    position: 'absolute',
+		    top: pos.topPos,
+		    left: pos.leftPos
+		  });
 
 		var s = page.createElement('span');
-		s.style.position = 'absolute';
-		s.style.top = '55%';
-		s.style.left = '45%';
+		stopTube.stylize(s, {
+		    position: 'absolute';
+		    top: '52%';
+		    left: '48%';
+		  });
 		s.textContent = 'Click To Play.';
 		a.appendChild(s);
-
 
 		divToOverlay.appendChild(a);
 		
@@ -185,11 +196,11 @@ var stopTube = {
 	videoLoadStarted: function(evt) {
 		var v = evt.target;
 
-		/* __debug__ */ stopTube.log('videoLoadStarted: ' + v.tagName);
+		stopTube.debug('videoLoadStarted: ' + v.tagName);
 
 		if (!v.stopTubeProcessing) {
 			v.stopTubeProcessing = true;
-			/* __debug__ */ stopTube.log('videoLoadStarted Processing: ' + v.tagName);
+			stopTube.debug('videoLoadStarted Processing: ' + v.tagName);
 			v.removeEventListener('loadedmetadata', stopTube.videoLoadStarted);
 			v.pause(); 
 			var src = v.getAttribute('src');
@@ -209,14 +220,14 @@ var stopTube = {
 			topPos += obj.offsetTop;
 		}
 		while (obj = obj.offsetParent);
-		/* __debug__ */ stopTube.log('findPosition: ' + leftPos + ',' + topPos);
+		stopTube.debug('findPosition: ' + leftPos + ',' + topPos);
 		return { 'leftPos': leftPos, 'topPos': topPos };
 	},
 
 	handlePlayRequested: function(evt) {
-		var a = evt.target;
-		var doc = evt.target.ownerDocument;
-		var v = stopTube.getVideoTag(doc);
+		var a = evt.target,
+			doc = evt.target.ownerDocument,
+			v = stopTube.getVideoTag(doc);
 		
 		stopTube.playVideo(v);
 		
@@ -233,11 +244,16 @@ var stopTube = {
 	},
 	
 	
-	// __debug__ // /* 
 	log : function (message) {
 		var consoleService = Components.classes['@mozilla.org/consoleservice;1'].getService(Components.interfaces.nsIConsoleService);
 		consoleService.logStringMessage('stopTube: ' + message);
 	}
-	// __debug__ // */
+
+	// <build:remove> 
+	debug : function (message) {
+		var consoleService = Components.classes['@mozilla.org/consoleservice;1'].getService(Components.interfaces.nsIConsoleService);
+		consoleService.logStringMessage('stopTube: ' + message);
+	}
+	// </build:remove> 
 };
 
