@@ -25,7 +25,7 @@
 		  <Description>
 			<em:id>{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}</em:id><!-- SeaMonkey -->
 			<em:minVersion>2.1</em:minVersion>
-			<em:maxVersion>2.20</em:maxVersion>
+			<em:maxVersion>21.20</em:maxVersion>
 		  </Description>
 		</em:targetApplication>
 
